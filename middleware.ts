@@ -1,16 +1,19 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/join/(.*)',
-  '/game/(.*)/play',
-  '/api/webhooks/(.*)',
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/api/games(.*)',
+]);
+
+const isHostGameRoute = createRouteMatcher([
+  '/game/[^/]+$', // Matches /game/{gameId} but not /game/{gameId}/play
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
+  const url = new URL(request.url);
+  const isGamePlay = url.pathname.match(/^\/game\/[^\/]+\/play$/);
+
+  if (isProtectedRoute(request) || (isHostGameRoute(request) && !isGamePlay)) {
     await auth.protect();
   }
 });
