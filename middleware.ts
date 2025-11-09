@@ -5,15 +5,15 @@ const isProtectedRoute = createRouteMatcher([
   '/api/games(.*)',
 ]);
 
-const isHostGameRoute = createRouteMatcher([
-  '/game/[^/]+$', // Matches /game/{gameId} but not /game/{gameId}/play
-]);
-
 export default clerkMiddleware(async (auth, request) => {
   const url = new URL(request.url);
-  const isGamePlay = url.pathname.match(/^\/game\/[^\/]+\/play$/);
+  const pathname = url.pathname;
 
-  if (isProtectedRoute(request) || (isHostGameRoute(request) && !isGamePlay)) {
+  // Only protect dashboard and game creation API
+  // Allow: /, /join/*, /game/*/play, /sign-in, /sign-up
+  const isHostGameView = pathname.match(/^\/game\/[^\/]+$/) && !pathname.includes('/play');
+
+  if (isProtectedRoute(request) || isHostGameView) {
     await auth.protect();
   }
 });
